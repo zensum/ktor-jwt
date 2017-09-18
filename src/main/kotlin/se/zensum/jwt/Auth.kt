@@ -48,7 +48,7 @@ private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: Stri
             is TokenExpiredException -> log.warn("An expired token with $signature was used for request to $path.")
             is InvalidClaimException -> log.warn("Request to $path with $signature contained an invalid claim.")
             is JWTDecodeException -> log.error("Could not decode token from Base64 to JSON.")
-            else  -> throw exception
+            else -> throw exception
         }
         null
     }
