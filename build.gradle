@@ -20,12 +20,10 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_platform_version"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.0'
     }
 }
 
 apply plugin: "org.junit.platform.gradle.plugin"
-apply plugin: 'com.github.johnrengelman.shadow'
 
 repositories {
     jcenter()
@@ -56,34 +54,15 @@ dependencies {
     compile 'io.github.microutils:kotlin-logging:1.4.6'
     
     // Project specific dependencies (disabled by default)
-    //compile 'com.github.zensum:franz:master-SNAPSHOT'
-    //compile 'com.github.zensum:server-utilities:master-SNAPSHOT'
-    //compile 'com.github.zensum:secret-connector:0.1.0'
-    //compile 'com.github.zensum:idempotence-connector:0.1.0'
-    //compile 'com.github.zensum:mail-proto:master-SNAPSHOT'
-    //compile 'com.github.zensum:sms-proto:master-SNAPSHOT'
-    //compile 'com.github.zensum:ktor-prometheus-feature:master-SNAPSHOT'
-    //compile 'com.github.zensum:ktor-sentry-feature:master-SNAPSHOT'
-    //compile 'com.github.zensum:ktor-health-check:master-SNAPSHOT'
-    //compile 'org.jetbrains.ktor:ktor-core:0.4.0'
-    //compile 'org.jetbrains.ktor:ktor-netty:0.4.0'
-    //compile 'com.github.jkcclemens:khttp:eab56a27d3'
+    compile 'org.jetbrains.ktor:ktor-core:0.4.0'
+    compile 'org.jetbrains.ktor:ktor-netty:0.4.0'
+
+    compile 'com.auth0:java-jwt:3.2.0'
+    compile 'com.auth0:jwks-rsa:0.1.0'
 }
 
 junitPlatform {
     platformVersion = junit_platform_version
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': "se.zensum.KotlinMainClassKt"
-    }
-}
-
-shadowJar {
-    baseName = 'shadow'
-    classifier = null
-    version = null
 }
 
 compileKotlin {
@@ -115,18 +94,6 @@ sourceSets {
     test.kotlin.srcDirs += 'src/test/kotlin'
     main.java.srcDirs += 'src/main/java'
     test.java.srcDirs += 'src/test/java'
-}
-
-task run(type: JavaExec) {
-    main = 'se.zensum.KotlinMainClassKt' //Important that 'Kt' is appended to class name
-    classpath = sourceSets.main.runtimeClasspath
-}
-
-task debug(type: JavaExec) {
-    debug true
-    environment "DEBUG", "true"
-    main = project.tasks.run.main
-    classpath = project.tasks.run.classpath
 }
 
 task wrapper(type: Wrapper) {
