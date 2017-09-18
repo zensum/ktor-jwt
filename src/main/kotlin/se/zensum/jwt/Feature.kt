@@ -10,22 +10,24 @@ import org.jetbrains.ktor.util.ValuesMap
 
 private val REQUEST_KEY = AttributeKey<DecodedJWT>("jwt")
 
-class JWTFeature(private val config: JWTConfig): ApplicationFeature<ApplicationCallPipeline, JWTConfig, JWTFeature> {
-    override val key: AttributeKey<JWTFeature> = AttributeKey("JWT")
-
-    override fun install(pipeline: ApplicationCallPipeline, configure: JWTConfig.() -> Unit): JWTFeature {
-        val result = JWTFeature(JWTConfig().apply(configure))
-        pipeline.intercept(ApplicationCallPipeline.Call) {
-            result.intercept(this)
-        }
-        return result
-    }
+class JWTFeature(private val config: JWTConfig) {
 
     private suspend fun intercept(context: PipelineContext<Unit>) {
         val headers: ValuesMap = context.call.request.headers
         val path: String = context.call.request.path()
         verifyToken(config, headers, path)?.let {
             context.call.attributes.put(REQUEST_KEY, it)
+        }
+    }
+
+    companion object Feature: ApplicationFeature<ApplicationCallPipeline, JWTConfig, JWTFeature> {
+        override val key: AttributeKey<JWTFeature> = AttributeKey("JWT")
+        override fun install(pipeline: ApplicationCallPipeline, configure: JWTConfig.() -> Unit): JWTFeature {
+            val result = JWTFeature(JWTConfig().apply(configure))
+            pipeline.intercept(ApplicationCallPipeline.Call) {
+                result.intercept(this)
+            }
+            return result
         }
     }
 }

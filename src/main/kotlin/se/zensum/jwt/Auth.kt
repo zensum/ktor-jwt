@@ -26,7 +26,7 @@ class JWTConfig {
 }
 
 
-fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT? {
+suspend fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT? {
     val tokenField: String = headers["Authorization"] ?: return null
     val token: String = tokenField.removePrefix("Bearer ")
     val algorithm = Algorithm.RSA256(config.publicKey, config.privateKey)
@@ -37,7 +37,7 @@ fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT
     return verifyToken(verifier, token, path)
 }
 
-private fun verifyToken(verifier: JWTVerifier, token: String, path: String): DecodedJWT? {
+private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: String): DecodedJWT? {
     return try {
         verifier.verify(token)
     }
