@@ -32,5 +32,5 @@ class JWTFeature(private val config: JWTConfig) {
     }
 }
 
-fun PipelineContext<Unit>.isVerified(): Boolean = REQUEST_KEY in this.call.attributes
+fun PipelineContext<Unit>.isVerified(): Boolean = REQUEST_KEY in this.call.attributes && token() != null
 fun PipelineContext<Unit>.token(): DecodedJWT? = this.call.attributes[REQUEST_KEY]
