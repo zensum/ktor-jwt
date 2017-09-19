@@ -20,7 +20,7 @@ private val log = KotlinLogging.logger("auth")
 class JWTConfig {
     private val provider: JwkProvider = UrlJwkProvider(getEnv("JWK_URL"))
     private val keyId: String = getEnv("JWT_KEY_ID")
-    val keyIssuer: String = getEnv("JWT_KEY_ISSUER")
+    val keyIssuer: String = getEnv("JWT_ISSUER")
     val publicKey: RSAPublicKey = provider[keyId].publicKey as RSAPublicKey
     val privateKey: RSAPrivateKey? = null
 }
