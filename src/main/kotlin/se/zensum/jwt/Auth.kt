@@ -21,14 +21,24 @@ class JWTConfig {
     private val provider: JwkProvider = UrlJwkProvider(getEnv("JWK_URL"))
     private val keyId: String = getEnv("JWT_KEY_ID")
     val keyIssuer: String = getEnv("JWT_ISSUER")
-    val publicKey: RSAPublicKey = provider[keyId].publicKey as RSAPublicKey
+    val publicKey: RSAPublicKey = provider[keyId].publicKey as RSAPublicKey // TODO Make lazy?? USe fun??
     val privateKey: RSAPrivateKey? = null
 }
-
 
 suspend fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT? {
     val tokenField: String = headers["Authorization"] ?: return null
     val token: String = tokenField.removePrefix("Bearer ")
+
+    if(tokenField.length == token.length) {
+        log.debug("Got Authorization field without Bearer prefix: $tokenField")
+        return null
+    }
+
+    if(!isValidJwtSyntax(token)) {
+        log.debug("Got JWT that does not conform to expected syntax: $token")
+        return null
+    }
+
     val algorithm = Algorithm.RSA256(config.publicKey, config.privateKey)
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(config.keyIssuer)
@@ -53,5 +63,9 @@ private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: Stri
         null
     }
 }
+
+private val base64 = Regex("[\\w\\-_=]")
+private val jwtRegex = Regex("$base64+\\.$base64+\\.$base64+")
+fun isValidJwtSyntax(token: String): Boolean = token.matches(jwtRegex)
 
 fun getEnv(e : String, default: String? = null) : String = System.getenv()[e] ?: default ?: throw RuntimeException("Missing environment variable $e and no default value is given.")
