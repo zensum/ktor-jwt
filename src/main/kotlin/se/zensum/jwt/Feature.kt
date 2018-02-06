@@ -1,9 +1,11 @@
 package se.zensum.jwt
 
 import com.auth0.jwt.interfaces.DecodedJWT
+import org.jetbrains.ktor.application.ApplicationCall
 import org.jetbrains.ktor.application.ApplicationCallPipeline
 import org.jetbrains.ktor.application.ApplicationFeature
 import org.jetbrains.ktor.pipeline.PipelineContext
+import org.jetbrains.ktor.request.ApplicationRequest
 import org.jetbrains.ktor.request.path
 import org.jetbrains.ktor.util.AttributeKey
 import org.jetbrains.ktor.util.ValuesMap
@@ -32,5 +34,10 @@ class JWTFeature(private val config: JWTConfig) {
     }
 }
 
-fun PipelineContext<Unit>.isVerified(): Boolean = REQUEST_KEY in this.call.attributes && token() != null
-fun PipelineContext<Unit>.token(): DecodedJWT? = this.call.attributes[REQUEST_KEY]
+fun PipelineContext<Unit>.isVerified(): Boolean = this.call.isVerified()
+fun PipelineContext<Unit>.token(): DecodedJWT? = this.call.token()
+fun ApplicationCall.isVerified(): Boolean = token() != null
+fun ApplicationCall.token(): DecodedJWT? =
+    if (REQUEST_KEY in attributes)
+        attributes[REQUEST_KEY]
+    else null
