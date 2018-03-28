@@ -10,8 +10,9 @@ import com.auth0.jwt.exceptions.JWTDecodeException
 import com.auth0.jwt.exceptions.SignatureVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
 import com.auth0.jwt.interfaces.DecodedJWT
+import io.ktor.http.Headers
+import kotlinx.coroutines.experimental.future.await
 import mu.KotlinLogging
-import org.jetbrains.ktor.util.ValuesMap
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
@@ -25,7 +26,7 @@ class JWTConfig {
     val privateKey: RSAPrivateKey? = null
 }
 
-suspend fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT? {
+suspend fun verifyToken(config: JWTConfig, headers: Headers, path: String): DecodedJWT? {
     val tokenField: String = headers["Authorization"] ?: return null
     val token: String = tokenField.removePrefix("Bearer ")
 
