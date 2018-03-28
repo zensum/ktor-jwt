@@ -10,9 +10,10 @@ description = 'description of project'
 defaultTasks 'run'
 
 buildscript {
-    ext.kotlin_version = '1.2.10'
+    ext.kotlin_version = '1.2.30'
     ext.jvm_version = '1.8'
-    ext.junit_platform_version = '1.0.1'
+    ext.junit_platform_version = '1.1.0'
+    ext.ktor_version = '0.9.1'
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
@@ -41,23 +42,23 @@ repositories {
 
 dependencies {
     // Kotlin
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.19.3'
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19.3'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.22.5'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
     
     // Junit
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.1'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.1.0'
     testCompile "org.junit.platform:junit-platform-launcher:$junit_platform_version"
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.1'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
     
     // Logging
-    compile 'io.github.microutils:kotlin-logging:1.4.6'
+    compile 'io.github.microutils:kotlin-logging:1.4.9'
     
     // Project specific dependencies (disabled by default)
-    compile 'org.jetbrains.ktor:ktor-core:0.4.0'
+    compile "io.ktor:ktor-server-core:$ktor_version"
 
-    compile 'com.auth0:java-jwt:3.2.0'
-    compile 'com.auth0:jwks-rsa:0.1.0'
+    compile 'com.auth0:java-jwt:3.3.0'
+    compile 'com.auth0:jwks-rsa:0.3.0'
 }
 
 junitPlatform {

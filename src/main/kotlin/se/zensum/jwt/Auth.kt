@@ -10,10 +10,12 @@ import com.auth0.jwt.exceptions.JWTDecodeException
 import com.auth0.jwt.exceptions.SignatureVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
 import com.auth0.jwt.interfaces.DecodedJWT
+import io.ktor.http.Headers
+import kotlinx.coroutines.experimental.future.await
 import mu.KotlinLogging
-import org.jetbrains.ktor.util.ValuesMap
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
+import java.util.concurrent.CompletableFuture
 
 private val log = KotlinLogging.logger("auth")
 
@@ -25,7 +27,7 @@ class JWTConfig {
     val privateKey: RSAPrivateKey? = null
 }
 
-suspend fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): DecodedJWT? {
+suspend fun verifyToken(config: JWTConfig, headers: Headers, path: String): DecodedJWT? {
     val tokenField: String = headers["Authorization"] ?: return null
     val token: String = tokenField.removePrefix("Bearer ")
 
@@ -48,8 +50,9 @@ suspend fun verifyToken(config: JWTConfig, headers: ValuesMap, path: String): De
 }
 
 private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: String): DecodedJWT? {
-    return try {
-        verifier.verify(token)
+    val cf: CompletableFuture<DecodedJWT?> = CompletableFuture()
+    try {
+        cf.complete(verifier.verify(token))
     }
     catch(exception: Exception) {
         val signature: String = token.split(".")[2]
@@ -58,10 +61,12 @@ private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: Stri
             is TokenExpiredException -> log.warn("An expired token with $signature was used for request to $path.")
             is InvalidClaimException -> log.warn("Request to $path with $signature contained an invalid claim.")
             is JWTDecodeException -> log.error("Could not decode token from Base64 to JSON.")
-            else -> throw exception
+            else -> cf.completeExceptionally(exception)
         }
-        null
+        cf.complete(null)
     }
+
+    return cf.await()
 }
 
 private val base64 = Regex("[\\w\\-_=]")
