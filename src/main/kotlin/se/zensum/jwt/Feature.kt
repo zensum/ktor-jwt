@@ -18,6 +18,7 @@ class Configuration internal constructor() {
     private var jwkURL: String? = null
     private var issuer: String? = null
     private var audience: String? = null
+    private var configOverride: JWTConfig? = null
 
     private fun jwkURL() =
         jwkURL ?: getEnv("JWK_URL")
@@ -26,25 +27,38 @@ class Configuration internal constructor() {
     private fun audience(): String =
         audience ?: getEnv("JWT_AUDIENCE", "")
 
+    private fun throwIfConfigSet() {
+        if (configOverride != null) {
+            throw UnsupportedOperationException("cannot set config after setting override")
+        }
+    }
     fun jwkURL(url: String) {
+        throwIfConfigSet()
         this.jwkURL = url
     }
 
     fun issuer(iss: String) {
+        throwIfConfigSet()
         this.issuer = iss
     }
 
     fun audience(aud: String) {
+        throwIfConfigSet()
         this.audience = aud
+    }
+
+    fun jwtConfig(jwtConfig: JWTConfig) {
+        if (jwkURL != null || issuer != null || audience != null) {
+            throw UnsupportedOperationException("Cannot set jwtConfig after setting anything else!")
+        }
+        this.configOverride = jwtConfig
     }
 
     private fun jwkProvider() =
         JwkProviderBuilder(jwkURL()).build()
 
     internal fun getConfig() =
-        JWTConfig(jwkProvider(), issuer(), audience())
-
-    fun getVerifier(): JWTVerifier = getConfig().verifier
+        configOverride ?: JWTConfig(jwkProvider(), issuer(), audience())
 }
 
 class JWTFeature internal constructor(private val provider: JWTProvider) {
