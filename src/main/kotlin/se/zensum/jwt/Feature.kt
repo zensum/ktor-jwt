@@ -19,6 +19,7 @@ class Configuration internal constructor() {
     private var issuer: String? = null
     private var audience: String? = null
     private var configOverride: JWTConfig? = null
+    private var providerOverride: JWTProvider? = null
 
     private fun jwkURL() =
         jwkURL ?: getEnv("JWK_URL")
@@ -28,7 +29,7 @@ class Configuration internal constructor() {
         audience ?: getEnv("JWT_AUDIENCE", "")
 
     private fun throwIfConfigSet() {
-        if (configOverride != null) {
+        if (configOverride != null || providerOverride != null) {
             throw UnsupportedOperationException("cannot set config after setting override")
         }
     }
@@ -54,11 +55,20 @@ class Configuration internal constructor() {
         this.configOverride = jwtConfig
     }
 
+    fun jwtProvider(jwtProvider: JWTProvider) {
+        if (jwkURL != null || issuer != null || audience != null || configOverride != null) {
+            throw UnsupportedOperationException("Cannot set jwtProvider after setting anything else!")
+        }
+        this.providerOverride = jwtProvider
+    }
+
     private fun jwkProvider() =
         JwkProviderBuilder(jwkURL()).build()
 
-    internal fun getConfig() =
+    private fun getConfig() =
         configOverride ?: JWTConfig(jwkProvider(), issuer(), audience())
+    internal fun getProvider(): JWTProvider =
+        providerOverride ?: JWTProviderImpl(getConfig())
 }
 
 class JWTFeature internal constructor(private val provider: JWTProvider) {
@@ -75,9 +85,8 @@ class JWTFeature internal constructor(private val provider: JWTProvider) {
     companion object Feature: ApplicationFeature<ApplicationCallPipeline, Configuration, JWTFeature> {
         override val key: AttributeKey<JWTFeature> = AttributeKey("JWT")
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): JWTFeature {
-            val cfg = Configuration().apply(configure).getConfig()
-            val jwtProvider = JWTProviderImpl(cfg)
-            val feature = JWTFeature(jwtProvider)
+            val provider = Configuration().apply(configure).getProvider()
+            val feature = JWTFeature(provider)
             pipeline.intercept(ApplicationCallPipeline.Call) {
                 feature.intercept(this)
             }
