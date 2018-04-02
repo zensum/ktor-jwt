@@ -5,9 +5,9 @@ import com.auth0.jwt.interfaces.RSAKeyProvider
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
-class JWKKeyProvider(private val jwkProvider: JwkProvider) : RSAKeyProvider {
+internal class JWKKeyProvider(private val jwkProvider: JwkProvider) : RSAKeyProvider {
     override fun getPublicKeyById(kid: String) =
-        jwkProvider.get(kid) as RSAPublicKey
+        jwkProvider.get(kid).publicKey as RSAPublicKey
 
     override fun getPrivateKey(): RSAPrivateKey {
         throw UnsupportedOperationException()
