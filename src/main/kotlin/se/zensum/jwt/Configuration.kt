@@ -4,6 +4,8 @@ import com.auth0.jwk.JwkProviderBuilder
 
 private fun getEnv(e : String, default: String? = null) : String = System.getenv()[e] ?: default ?: throw RuntimeException("Missing environment variable $e and no default value is given.")
 
+private const val JWKS_SUFFIX = ".well-known/jwks.json"
+
 class Configuration internal constructor() {
     private var jwkURL: String? = null
     private var issuer: String? = null
@@ -12,7 +14,7 @@ class Configuration internal constructor() {
     private var providerOverride: JWTProvider? = null
 
     private fun jwkURL() =
-        jwkURL ?: getEnv("JWK_URL")
+        (jwkURL ?: getEnv("JWK_URL")).removeSuffix(JWKS_SUFFIX)
     private fun issuer(): String =
         issuer ?: getEnv("JWT_ISSUER")
     private fun audience(): String =
