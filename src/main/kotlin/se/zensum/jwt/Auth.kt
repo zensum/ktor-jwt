@@ -19,5 +19,3 @@ class JWTProviderImpl(private val verifier: JWTVerifier) : JWTProvider {
             null
         }
 }
-
-fun getEnv(e : String, default: String? = null) : String = System.getenv()[e] ?: default ?: throw RuntimeException("Missing environment variable $e and no default value is given.")

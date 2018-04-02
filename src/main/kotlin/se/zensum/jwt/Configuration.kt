@@ -2,6 +2,8 @@ package se.zensum.jwt
 
 import com.auth0.jwk.JwkProviderBuilder
 
+private fun getEnv(e : String, default: String? = null) : String = System.getenv()[e] ?: default ?: throw RuntimeException("Missing environment variable $e and no default value is given.")
+
 class Configuration internal constructor() {
     private var jwkURL: String? = null
     private var issuer: String? = null
