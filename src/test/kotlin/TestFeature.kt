@@ -38,6 +38,12 @@ private fun withApp(jwtProvider: JWTProvider, test: TestApplicationEngine.() -> 
             get("/url-that-doesnt-care") {
                 call.respondText("it doesn't really care!")
             }
+            get("/echo") {
+                val t = call.token()
+                call.respondText(if (t != null)
+                    t.getClaim("name").asString()
+                else "nope!")
+            }
         }
     }, test)
 }
@@ -117,6 +123,17 @@ class RequestTest {
                 addHeader("Authorization", "SENTINEL")
             })) {
                 assertUnhandled()
+            }
+        }
+    }
+
+    @Test fun testTokenField() {
+        withApp(sentinelMockJWT) {
+            with(handleRequest(HttpMethod.Get, "/echo", {
+                addHeader("Authorization", "SENTINEL")
+            })) {
+                assertOK()
+                assertEquals("John Doe", response.content)
             }
         }
     }
