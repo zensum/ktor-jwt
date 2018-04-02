@@ -13,11 +13,8 @@ import kotlin.test.*
 
 
 class MockJWTProvider(
-    private val header: (String) -> DecodedJWT? = { null },
     private val token: (String) -> DecodedJWT? = { null }
 ) : JWTProvider {
-    override fun verifyAuthorizationHeader(authorizationHeader: String): DecodedJWT? =
-        header(authorizationHeader)
     override fun verifyJWT(token: String): DecodedJWT? =
         token(token)
 }
@@ -63,13 +60,13 @@ class RequestTest {
     private val DUMMY_JWT =
         JWT.decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ")
     val SENTINEL = "SENTINEL"
-    private val sentinelMockJWT = MockJWTProvider(header = {
-        if (SENTINEL === it)
+    private val sentinelMockJWT = MockJWTProvider {
+        if (SENTINEL == it)
             DUMMY_JWT
         else
             null
-    })
-    private val neverAuthMock = MockJWTProvider()
+    }
+    private val neverAuthMock = MockJWTProvider { null }
 
     @Test fun testNotAuthorizedWOHeader() {
         withApp(neverAuthMock) {
@@ -83,7 +80,7 @@ class RequestTest {
     @Test fun testIsAuthorized() {
         withApp(sentinelMockJWT) {
             with(handleRequest(HttpMethod.Get, "/is-auth", {
-                addHeader("Authorization", "SENTINEL")
+                addHeader("Authorization", "Bearer SENTINEL")
             })) {
                 assertOK()
             }
@@ -93,7 +90,7 @@ class RequestTest {
     @Test fun testDoesntCareAuthorized() {
         withApp(sentinelMockJWT) {
             with(handleRequest(HttpMethod.Get, "/url-that-doesnt-care", {
-                addHeader("Authorization", "SENTINEL")
+                addHeader("Authorization", "Bearer SENTINEL")
             })) {
                 assertOK()
             }
@@ -120,7 +117,7 @@ class RequestTest {
     @Test fun test404Auth() {
         withApp(sentinelMockJWT) {
             with(handleRequest(HttpMethod.Get, "/this-url-should-404", {
-                addHeader("Authorization", "SENTINEL")
+                addHeader("Authorization", "Bearer SENTINEL")
             })) {
                 assertUnhandled()
             }
@@ -130,7 +127,7 @@ class RequestTest {
     @Test fun testTokenField() {
         withApp(sentinelMockJWT) {
             with(handleRequest(HttpMethod.Get, "/echo", {
-                addHeader("Authorization", "SENTINEL")
+                addHeader("Authorization", "Bearer SENTINEL")
             })) {
                 assertOK()
                 assertEquals("John Doe", response.content)

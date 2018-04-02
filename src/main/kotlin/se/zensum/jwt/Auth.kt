@@ -8,22 +8,12 @@ import mu.KLogging
 class JWTProviderImpl(private val config: JWTConfig) : JWTProvider {
     companion object: KLogging()
 
-    override fun verifyAuthorizationHeader(authorizationHeader: String): DecodedJWT? {
-        val token: String = authorizationHeader.removePrefix("Bearer ")
-
-        if(authorizationHeader.length == token.length) {
-            logger.debug("Got Authorization field without Bearer prefix: $authorizationHeader")
-            return null
-        }
-        if(!isValidJwtSyntax(token)) {
-            logger.debug("Got JWT that does not conform to expected syntax: $token")
-            return null
-        }
-        return verifyJWT(token)
-    }
     override fun verifyJWT(token: String): DecodedJWT? =
         try {
-            config.verifier.verify(token)
+            if(!isValidJwtSyntax(token)) {
+                logger.debug("Got JWT that does not conform to expected syntax: $token")
+                null
+            } else config.verifier.verify(token)
         } catch (exception: JWTVerificationException) {
             logger.warn({
                 "JWT verifcation failed: ${exception.javaClass.name}, ${exception.message}"

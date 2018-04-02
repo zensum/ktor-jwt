@@ -71,11 +71,14 @@ class Configuration internal constructor() {
         providerOverride ?: JWTProviderImpl(getConfig())
 }
 
+private const val BEARER_AUTH_TYPE = "Bearer "
 class JWTFeature internal constructor(private val provider: JWTProvider) {
     private fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
         context.call.apply {
-            request.authorization()?.let {
-                provider.verifyAuthorizationHeader(it)
+            request.authorization()?.takeIf {
+                it.startsWith(BEARER_AUTH_TYPE)
+            }?.removePrefix(BEARER_AUTH_TYPE)?.trim()?.let {
+                provider.verifyJWT(it)
             }?.let {
                 attributes.put(REQUEST_KEY, it)
             }
