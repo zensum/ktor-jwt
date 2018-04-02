@@ -5,13 +5,13 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 
-class JWTConfig(private val provider: JwkProvider,
+class JWTConfig(provider: JwkProvider,
                 private val issuer: String?,
                 private val audience: String?) {
     private val algorithm = Algorithm.RSA256(JWKKeyProvider(provider))
 
-    private fun hasIssuer() = (issuer != null) && issuer.isNotBlank()
-    private fun hasAudience() = (issuer != null) && issuer.isNotBlank()
+    private fun hasIssuer() = !issuer.isNullOrBlank()
+    private fun hasAudience() = !audience.isNullOrBlank()
 
     private fun mkVerifier(): JWTVerifier =
         JWT.require(algorithm)
