@@ -1,14 +1,7 @@
 package se.zensum.jwt
 
 import com.auth0.jwk.JwkProvider
-import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.response.respondText
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.testing.*
 import org.junit.Test
 import kotlin.test.*
 
