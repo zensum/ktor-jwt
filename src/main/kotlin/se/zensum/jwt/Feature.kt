@@ -68,7 +68,7 @@ class Configuration internal constructor() {
     private fun getConfig() =
         configOverride ?: JWTConfig(jwkProvider(), issuer(), audience())
     internal fun getProvider(): JWTProvider =
-        providerOverride ?: JWTProviderImpl(getConfig())
+        providerOverride ?: JWTProviderImpl(getConfig().verifier)
 }
 
 private const val BEARER_AUTH_TYPE = "Bearer "
