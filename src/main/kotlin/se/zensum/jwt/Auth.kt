@@ -1,76 +1,21 @@
 package se.zensum.jwt
 
-import com.auth0.jwk.JwkProvider
-import com.auth0.jwk.UrlJwkProvider
-import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.InvalidClaimException
-import com.auth0.jwt.exceptions.JWTDecodeException
-import com.auth0.jwt.exceptions.SignatureVerificationException
-import com.auth0.jwt.exceptions.TokenExpiredException
+import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
-import io.ktor.http.Headers
-import kotlinx.coroutines.experimental.future.await
-import mu.KotlinLogging
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.util.concurrent.CompletableFuture
 
-private val log = KotlinLogging.logger("auth")
+import mu.KLogging
 
-class JWTConfig {
-    private val provider: JwkProvider = UrlJwkProvider(getEnv("JWK_URL"))
-    private val keyId: String = getEnv("JWT_KEY_ID")
-    val keyIssuer: String = getEnv("JWT_ISSUER")
-    val publicKey: RSAPublicKey by lazy { provider[keyId].publicKey as RSAPublicKey }
-    val privateKey: RSAPrivateKey? = null
-}
+class JWTProviderImpl(private val verifier: JWTVerifier) : JWTProvider {
+    companion object: KLogging()
 
-suspend fun verifyToken(config: JWTConfig, headers: Headers, path: String): DecodedJWT? {
-    val tokenField: String = headers["Authorization"] ?: return null
-    val token: String = tokenField.removePrefix("Bearer ")
-
-    if(tokenField.length == token.length) {
-        log.debug("Got Authorization field without Bearer prefix: $tokenField")
-        return null
-    }
-
-    if(!isValidJwtSyntax(token)) {
-        log.debug("Got JWT that does not conform to expected syntax: $token")
-        return null
-    }
-
-    val algorithm = Algorithm.RSA256(config.publicKey, config.privateKey)
-    val verifier: JWTVerifier = JWT.require(algorithm)
-        .withIssuer(config.keyIssuer)
-        .build()
-
-    return verifyToken(verifier, token, path)
-}
-
-private suspend fun verifyToken(verifier: JWTVerifier, token: String, path: String): DecodedJWT? {
-    val cf: CompletableFuture<DecodedJWT?> = CompletableFuture()
-    try {
-        cf.complete(verifier.verify(token))
-    }
-    catch(exception: Exception) {
-        val signature: String = token.split(".")[2]
-        when(exception) {
-            is SignatureVerificationException -> log.warn("Verification failed for signature $signature for request to $path.")
-            is TokenExpiredException -> log.warn("An expired token with $signature was used for request to $path.")
-            is InvalidClaimException -> log.warn("Request to $path with $signature contained an invalid claim.")
-            is JWTDecodeException -> log.error("Could not decode token from Base64 to JSON.")
-            else -> cf.completeExceptionally(exception)
+    override fun verifyJWT(token: String): DecodedJWT? =
+        try {
+            verifier.verify(token)
+        } catch (exception: JWTVerificationException) {
+            logger.warn({
+                "JWT verification failed: ${exception.javaClass.name}, ${exception.message}"
+            })
+            null
         }
-        cf.complete(null)
-    }
-
-    return cf.await()
 }
-
-private val base64 = Regex("[\\w\\-_=]")
-private val jwtRegex = Regex("$base64+\\.$base64+\\.$base64+")
-fun isValidJwtSyntax(token: String): Boolean = token.matches(jwtRegex)
-
-fun getEnv(e : String, default: String? = null) : String = System.getenv()[e] ?: default ?: throw RuntimeException("Missing environment variable $e and no default value is given.")

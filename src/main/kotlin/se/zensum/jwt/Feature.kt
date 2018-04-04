@@ -5,31 +5,39 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
-import io.ktor.http.Headers
 import io.ktor.pipeline.PipelineContext
-import io.ktor.request.path
+import io.ktor.request.authorization
 import io.ktor.util.AttributeKey
 
 private val REQUEST_KEY = AttributeKey<DecodedJWT>("jwt")
 
-class JWTFeature(private val config: JWTConfig) {
+private const val BEARER_AUTH_TYPE = "Bearer "
 
-    private suspend fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
-        val headers: Headers = context.call.request.headers
-        val path: String = context.call.request.path()
-        verifyToken(config, headers, path)?.let {
-            context.call.attributes.put(REQUEST_KEY, it)
+private fun extractBearer(x: String?): String? = x
+    ?.takeIf { it.startsWith(BEARER_AUTH_TYPE) }
+    ?.removePrefix(BEARER_AUTH_TYPE)
+    ?.trim()
+
+class JWTFeature internal constructor(private val provider: JWTProvider) {
+    private fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
+        context.call.apply {
+            extractBearer(request.authorization())?.let {
+                provider.verifyJWT(it)
+            }?.let {
+                attributes.put(REQUEST_KEY, it)
+            }
         }
     }
 
-    companion object Feature: ApplicationFeature<ApplicationCallPipeline, JWTConfig, JWTFeature> {
+    companion object Feature: ApplicationFeature<ApplicationCallPipeline, Configuration, JWTFeature> {
         override val key: AttributeKey<JWTFeature> = AttributeKey("JWT")
-        override fun install(pipeline: ApplicationCallPipeline, configure: JWTConfig.() -> Unit): JWTFeature {
-            val result = JWTFeature(JWTConfig().apply(configure))
+        override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): JWTFeature {
+            val provider = Configuration().apply(configure).getProvider()
+            val feature = JWTFeature(provider)
             pipeline.intercept(ApplicationCallPipeline.Call) {
-                result.intercept(this)
+                feature.intercept(this)
             }
-            return result
+            return feature
         }
     }
 }
