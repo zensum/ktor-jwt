@@ -11,7 +11,6 @@ import io.ktor.server.testing.*
 import org.junit.Test
 import kotlin.test.*
 
-
 class MockJWTProvider(
     private val token: (String) -> DecodedJWT? = { null }
 ) : JWTProvider {

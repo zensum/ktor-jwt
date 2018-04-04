@@ -7,7 +7,7 @@ import com.auth0.jwt.interfaces.DecodedJWT
 import mu.KLogging
 
 class JWTProviderImpl(private val verifier: JWTVerifier) : JWTProvider {
-    companion object: KLogging()
+    companion object : KLogging()
 
     override fun verifyJWT(token: String): DecodedJWT? =
         try {

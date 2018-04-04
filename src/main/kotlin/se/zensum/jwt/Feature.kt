@@ -29,7 +29,7 @@ class JWTFeature internal constructor(private val provider: JWTProvider) {
         }
     }
 
-    companion object Feature: ApplicationFeature<ApplicationCallPipeline, Configuration, JWTFeature> {
+    companion object Feature : ApplicationFeature<ApplicationCallPipeline, Configuration, JWTFeature> {
         override val key: AttributeKey<JWTFeature> = AttributeKey("JWT")
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): JWTFeature {
             val provider = Configuration().apply(configure).getProvider()
