@@ -14,7 +14,7 @@ class JWTProviderImpl(private val verifier: JWTVerifier) : JWTProvider {
             verifier.verify(token)
         } catch (exception: JWTVerificationException) {
             logger.warn({
-                "JWT verifcation failed: ${exception.javaClass.name}, ${exception.message}"
+                "JWT verification failed: ${exception.javaClass.name}, ${exception.message}"
             })
             null
         }
