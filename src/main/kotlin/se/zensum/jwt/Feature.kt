@@ -5,9 +5,9 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
-import io.ktor.pipeline.PipelineContext
 import io.ktor.request.authorization
 import io.ktor.util.AttributeKey
+import io.ktor.util.pipeline.PipelineContext
 
 private val REQUEST_KEY = AttributeKey<DecodedJWT>("jwt")
 
